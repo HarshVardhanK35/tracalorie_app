@@ -1,4 +1,3 @@
-// ---------------------- Part - 01 ----------------------
 class CalorieTracker {
   constructor(){
     this._calorieLimit = 2000;
@@ -11,6 +10,7 @@ class CalorieTracker {
     this._displayCaloriesConsumed();
     this._displayCaloriesBurned();
     this._displayCaloriesRemaining();
+    this._displayCalorieProgress();
   }
 
   // Public Methods...
@@ -27,7 +27,6 @@ class CalorieTracker {
     this._render()
   }
 
-  // ---------------------- Part - 02 ----------------------
   // Private Methods
   _displayCaloriesTotal(){
     const totalCaloriesEl = document.getElementById('calories-total');
@@ -53,8 +52,29 @@ class CalorieTracker {
   }
   _displayCaloriesRemaining(){
     const caloriesRemainingEl = document.getElementById('calories-remaining');
+    const progressEl = document.getElementById('calorie-progress');
+
     const remaining = this._calorieLimit - this._totalCalories;
+
+    if(remaining <= 0){
+      caloriesRemainingEl.parentElement.parentElement.classList.remove('bg-light')
+      caloriesRemainingEl.parentElement.parentElement.classList.add('bg-danger');
+      progressEl.classList.remove('bg-success');
+      progressEl.classList.add('bg-danger')
+    }
+    else{
+      caloriesRemainingEl.parentElement.parentElement.classList.add('bg-light')
+      caloriesRemainingEl.parentElement.parentElement.classList.remove('bg-danger');
+      progressEl.classList.add('bg-success');
+      progressEl.classList.remove('bg-danger')
+    }
     caloriesRemainingEl.innerHTML = remaining;
+  }
+  _displayCalorieProgress(){
+    const progressEl = document.getElementById('calorie-progress');
+    const percentage = (this._totalCalories / this._calorieLimit) * 100;
+    const width = Math.min(percentage, 100);
+    progressEl.style.width = `${width}%`;
   }
 
   // Render Methods to render data manually...
@@ -63,6 +83,7 @@ class CalorieTracker {
     this._displayCaloriesConsumed();
     this._displayCaloriesBurned();
     this._displayCaloriesRemaining();
+    this._displayCalorieProgress();
   }
 
 }
@@ -95,6 +116,5 @@ tracker.addMeal(breakfast);
 // Created a new Instance of Workout()
 const pushups = new Workout('pushups', 320);
 tracker.addWorkout(pushups);
-tracker.addWorkout(running);
 
-console.log(tracker._workouts)
+console.log(tracker._displayCalorieProgress())
