@@ -6,7 +6,11 @@ class CalorieTracker {
     this._meals = [];
     this._workouts = [];
 
-    this._displayCaloriesTotal()
+    this._displayCalorieLimit();
+    this._displayCaloriesTotal();
+    this._displayCaloriesConsumed();
+    this._displayCaloriesBurned();
+    this._displayCaloriesRemaining();
   }
 
   // Public Methods...
@@ -17,7 +21,7 @@ class CalorieTracker {
     this._render()
   }
   addWorkout(workout){
-    this._Workouts.push(workout);
+    this._workouts.push(workout);
     this._totalCalories -= workout.calories;
 
     this._render()
@@ -29,9 +33,36 @@ class CalorieTracker {
     const totalCaloriesEl = document.getElementById('calories-total');
     totalCaloriesEl.innerHTML = this._totalCalories;
   }
+  _displayCalorieLimit(){
+    const calorieLimitEl = document.getElementById('calories-limit')
+    calorieLimitEl.innerHTML = this._calorieLimit;
+  }
+  _displayCaloriesConsumed(){
+    const calorieConsumedEl = document.getElementById('calories-consumed');
+    const consumed = this._meals.reduce((total, meal) => {
+      return (total + meal.calories)
+    }, 0);
+    calorieConsumedEl.innerHTML = consumed;
+  }
+  _displayCaloriesBurned(){
+    const calorieBurnedEl = document.getElementById('calories-burned');
+    const burned = this._workouts.reduce((total, workout) => {
+      return (total + workout.calories)
+    }, 0);
+    calorieBurnedEl.innerHTML = burned;
+  }
+  _displayCaloriesRemaining(){
+    const caloriesRemainingEl = document.getElementById('calories-remaining');
+    const remaining = this._calorieLimit - this._totalCalories;
+    caloriesRemainingEl.innerHTML = remaining;
+  }
 
+  // Render Methods to render data manually...
   _render(){
-    this._displayCaloriesTotal()
+    this._displayCaloriesTotal();
+    this._displayCaloriesConsumed();
+    this._displayCaloriesBurned();
+    this._displayCaloriesRemaining();
   }
 
 }
@@ -58,9 +89,12 @@ class Workout {
 const tracker = new CalorieTracker();
 
 // Created a new Instance of Meal()
-const breakfast = new Meal('Breakfast', 300);
+const breakfast = new Meal('Breakfast', 400);
 tracker.addMeal(breakfast);
 
 // Created a new Instance of Workout()
-const pushups = new Workout('pushups', 200);
-tracker.addWorkout = pushups;
+const pushups = new Workout('pushups', 320);
+tracker.addWorkout(pushups);
+tracker.addWorkout(running);
+
+console.log(tracker._workouts)
