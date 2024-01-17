@@ -1,6 +1,6 @@
 class CalorieTracker {
   constructor(){
-    this._calorieLimit = 2000;
+    this._calorieLimit = Storage.getCalorieLimit(2000);
     this._totalCalories = 0;
     this._meals = [];
     this._workouts = [];
@@ -57,6 +57,12 @@ class CalorieTracker {
     this._meals = []
     this._workouts = []
     this._render();
+  }
+  setLimit(calorieLimit){
+    this._calorieLimit = calorieLimit;
+    Storage.setCalorieLimit(calorieLimit)
+    this._displayCalorieLimit()
+    this._render()
   }
 
   // Private Methods
@@ -245,6 +251,23 @@ class Workout {
 //   }
 // }
 
+class Storage{
+  // we do not need multiple instances of storage (there is only one entity)
+  static getCalorieLimit(defaultLimit = 2000){
+    let calorieLimit;
+    if(localStorage.getItem('calorieLimit') === null){
+      calorieLimit = defaultLimit
+    }
+    else{
+      calorieLimit = +localStorage.getItem('calorieLimit')
+    }
+    return calorieLimit
+  }
+  static setCalorieLimit(calorieLimit){
+    localStorage.setItem('calorieLimit', calorieLimit)
+  }
+}
+
 class App{
   // ----------------------- Created class App{} another time for not to repeat same code for both meal and workout
   constructor(){
@@ -264,7 +287,10 @@ class App{
     document.getElementById('filter-workouts').addEventListener('keyup', this._filterItems.bind(this, 'workout'))
 
     // Reset
-    document.getElementById('reset').addEventListener('click', this._reset.bind(this))
+    document.getElementById('reset').addEventListener('click', this._reset.bind(this));
+
+    // Set Calorie Limit
+    document.getElementById('limit-form').addEventListener('submit', this._setLimit.bind(this))
 
   }
 
@@ -330,6 +356,22 @@ class App{
     document.getElementById('workout-items').innerHTML = ''
     document.getElementById('filter-meals').value = ''
     document.getElementById('filter-workouts').value = ''
+  }
+
+  _setLimit(e){
+    e.preventDefault()
+    const limit = document.getElementById('limit');
+
+    if(limit.value === ''){
+      alert('Please add a limit!!!')
+    }
+
+    this._tracker.setLimit(+limit.value);
+    limit.value = '';
+
+    const modalEl = document.getElementById('limit-modal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide()
   }
 }
 
