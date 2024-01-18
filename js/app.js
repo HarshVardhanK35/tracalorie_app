@@ -1,9 +1,9 @@
 class CalorieTracker {
   constructor(){
-    this._calorieLimit = Storage.getCalorieLimit(2000);
-    this._totalCalories = 0;
-    this._meals = [];
-    this._workouts = [];
+    this._calorieLimit = Storage.getCalorieLimit();
+    this._totalCalories = Storage.getTotalCalories(0);
+    this._meals = Storage.getMeals();
+    this._workouts = Storage.getWorkouts();
 
     this._displayCalorieLimit();
     this._displayCaloriesTotal();
@@ -11,6 +11,8 @@ class CalorieTracker {
     this._displayCaloriesBurned();
     this._displayCaloriesRemaining();
     this._displayCalorieProgress();
+
+    document.getElementById('limit').value = this._calorieLimit;
   }
 
   // Public Methods...
@@ -18,16 +20,24 @@ class CalorieTracker {
     this._meals.push(meal);
     this._totalCalories += meal.calories;
 
-    this._displayNewMeal(meal)
+    Storage.updateTotalCalories(this._totalCalories)
+    Storage.saveMeal(meal)
+
+    this._displayNewMeal(meal);
     this._render()
   }
+
   addWorkout(workout){
     this._workouts.push(workout);
     this._totalCalories -= workout.calories;
 
+    Storage.updateTotalCalories(this._totalCalories)
+    Storage.saveWorkout(workout)
+
     this._displayNewWorkout(workout)
     this._render()
   }
+
   removeMeal(id){
     // if condition (meal.id === id) is not matched then result is -1 otherwise it going to be the actual index
     const index = this._meals.findIndex((meal) => {
@@ -36,10 +46,13 @@ class CalorieTracker {
     if(index !== -1){
       const meal = this._meals[index]
       this._totalCalories -= meal.calories;
+      Storage.updateTotalCalories(this._totalCalories)
       this._meals.splice(index, 1)
+      Storage.removeMeal(id)
       this._render()
     }
   }
+
   removeWorkout(id){
     // if condition (workout.id === id) is not matched then result is -1 otherwise it going to be the actual index
     const index = this._workouts.findIndex((workout) => {
@@ -48,16 +61,21 @@ class CalorieTracker {
     if(index !== -1){
       const workout = this._workouts[index]
       this._totalCalories += workout.calories;
+      Storage.updateTotalCalories(this._totalCalories)
       this._workouts.splice(index, 1)
+      Storage.removeWorkout(id)
       this._render()
     }
   }
+
   reset(){
     this._totalCalories = 0;
-    this._meals = []
-    this._workouts = []
+    this._meals = [];
+    this._workouts = [];
+    Storage.clearAll();
     this._render();
   }
+
   setLimit(calorieLimit){
     this._calorieLimit = calorieLimit;
     Storage.setCalorieLimit(calorieLimit)
@@ -65,15 +83,23 @@ class CalorieTracker {
     this._render()
   }
 
+  loadItems() {
+    this._meals.forEach(meal => this._displayNewMeal(meal))
+    this._workouts.forEach(workout => this._displayNewWorkout(workout))
+  }
+
+
   // Private Methods
   _displayCaloriesTotal(){
     const totalCaloriesEl = document.getElementById('calories-total');
     totalCaloriesEl.innerHTML = this._totalCalories;
   }
+
   _displayCalorieLimit(){
     const calorieLimitEl = document.getElementById('calories-limit')
     calorieLimitEl.innerHTML = this._calorieLimit;
   }
+
   _displayCaloriesConsumed(){
     const calorieConsumedEl = document.getElementById('calories-consumed');
     const consumed = this._meals.reduce((total, meal) => {
@@ -81,6 +107,7 @@ class CalorieTracker {
     }, 0);
     calorieConsumedEl.innerHTML = consumed;
   }
+
   _displayCaloriesBurned(){
     const calorieBurnedEl = document.getElementById('calories-burned');
     const burned = this._workouts.reduce((total, workout) => {
@@ -88,6 +115,7 @@ class CalorieTracker {
     }, 0);
     calorieBurnedEl.innerHTML = burned;
   }
+
   _displayCaloriesRemaining(){
     const caloriesRemainingEl = document.getElementById('calories-remaining');
     const progressEl = document.getElementById('calorie-progress');
@@ -108,6 +136,7 @@ class CalorieTracker {
     }
     caloriesRemainingEl.innerHTML = remaining;
   }
+
   _displayCalorieProgress(){
     const progressEl = document.getElementById('calorie-progress');
     const percentage = (this._totalCalories / this._calorieLimit) * 100;
@@ -266,13 +295,88 @@ class Storage{
   static setCalorieLimit(calorieLimit){
     localStorage.setItem('calorieLimit', calorieLimit)
   }
+
+  static getTotalCalories(defaultCalories = 0){
+    let totalCalories;
+    if(localStorage.getItem('totalCalories') === null){
+      totalCalories = defaultCalories
+    }
+    else{
+      totalCalories = +localStorage.getItem('totalCalories')
+    }
+    return totalCalories
+  }
+  static updateTotalCalories(calories){
+    localStorage.setItem('totalCalories', calories)
+  }
+
+  static getMeals(){
+    let meals;
+    if(localStorage.getItem('meals') === null){
+      meals = []
+    }
+    else{
+      meals = JSON.parse(localStorage.getItem('meals'))
+    }
+    return meals
+  }
+  static saveMeal(meal){
+    const meals = Storage.getMeals();
+    meals.push(meal);
+    localStorage.setItem('meals', JSON.stringify(meals))
+  }
+  static removeMeal(id){
+    const meals = Storage.getMeals();
+    meals.forEach((meal, index)=>{
+      if(meal.id === id){
+        meals.splice(index, 1)
+      }
+    })
+    localStorage.setItem('meals', JSON.stringify(meals))
+  }
+
+  static getWorkouts(){
+    let workouts;
+    if(localStorage.getItem('workouts') === null){
+      workouts = []
+    }
+    else{
+      workouts = JSON.parse(localStorage.getItem('workouts'))
+    }
+    return workouts
+  }
+  static saveWorkout(workout){
+    const workouts = Storage.getWorkouts();
+    workouts.push(workout);
+    localStorage.setItem('workouts', JSON.stringify(workouts))
+  }
+  static removeWorkout(id){
+    const workouts = Storage.getWorkouts();
+    workouts.forEach((workout, index)=>{
+      if(workout.id === id){
+        workouts.splice(index, 1)
+      }
+    })
+    localStorage.setItem('workouts', JSON.stringify(workouts))
+  }
+
+  static clearAll(){
+    localStorage.removeItem('totalCalories')
+    localStorage.removeItem('meals')
+    localStorage.removeItem('workouts')
+    location.reload()
+  }
 }
 
 class App{
   // ----------------------- Created class App{} another time for not to repeat same code for both meal and workout
   constructor(){
     this._tracker = new CalorieTracker();
+    this._loadEventListeners()
+    this._tracker.loadItems()
+  }
 
+  _loadEventListeners(){
     // Adding Items
     document.getElementById('meal-form').addEventListener('submit', this._newItem.bind(this, 'meal')) //--- here 'this' keyword refers to the element that the event is on
     // but here we must have to make 'this' must pertain to the app that we initialize, so we have to bind this
@@ -291,7 +395,6 @@ class App{
 
     // Set Calorie Limit
     document.getElementById('limit-form').addEventListener('submit', this._setLimit.bind(this))
-
   }
 
   _newItem(type, e){
@@ -374,7 +477,5 @@ class App{
     modal.hide()
   }
 }
-
-
 
 const app = new App();
